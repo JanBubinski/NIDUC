@@ -51,6 +51,14 @@ class Server:
         text_x = self.x + self.width / 2 - label.get_width() / 2
         text_y = self.y - 20
         screen.blit(label, (text_x, text_y))
+        failed_color = (255,0,0)
+        text = f"{not self.working_time:.1f} h"
+        label= font.render(text, True, failed_color)
+        x_failed=700
+        y_failed=100
+        if someone_failed:
+            screen.blit(label, (x_failed, y_failed))
+
 servers = []
 for i in range(10):
     x = 100 + (i % 5) * 140
