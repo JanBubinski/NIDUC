@@ -1,7 +1,9 @@
 import pygame as pg
 import random
 import pygame.image
-
+import csv
+import matplotlib as plt
+import numpy as np
 pg.init()
 screen = pg.display.set_mode((800, 500))
 clock = pg.time.Clock()
@@ -18,7 +20,10 @@ class Server:
         self.repair_time = 0
         self.working_time = 0
         self.just_failed = False
-
+        self.total_repair_time =0
+        self.sim_hours =0
+        self.freeze = False
+        self.fail_count =0
     def draw_shape(self):
         if self.working:
             square_color = (30,30,30)
@@ -33,15 +38,34 @@ class Server:
         radius = min(self.width, self.height) // 2
         pg.draw.circle(screen, orbit_color, ((cx), (cy)), radius)
     def update(self,sim_minutes):
-        self.working_time += sim_minutes / 60
+        if self.working:
+            if self.freeze==False:
+               self.working_time += sim_minutes / 60
         if self.working:
             if random.random() < 0.0001:
                 self.working = False
                 self.just_failed = True
+                self.fail_count += 1
         else:
             self.repair_time -= sim_minutes
+            self.total_repair_time += sim_minutes
             if self.repair_time <= 0:
                 self.working = True
+
+    @staticmethod
+    def repair_draw(servers):
+        x = 10
+        y = 50
+        spacing = 22
+
+        title = font.render("Repair", True, (255, 255, 255))
+        screen.blit(title, (x, y))
+
+        for i, s in enumerate(servers):
+            hours = s.total_repair_time / 60
+            text = f"S{i + 1}: {hours:.1f}h"
+            label = font.render(text, True, (255, 255, 255))
+            screen.blit(label, (x, y + (i + 1) * spacing))
 
     def draw(self):
         self.draw_shape()
@@ -51,13 +75,16 @@ class Server:
         text_x = self.x + self.width / 2 - label.get_width() / 2
         text_y = self.y - 20
         screen.blit(label, (text_x, text_y))
-        failed_color = (255,0,0)
-        text = f"{not self.working_time:.1f} h"
-        label= font.render(text, True, failed_color)
-        x_failed=700
-        y_failed=100
-        if someone_failed:
-            screen.blit(label, (x_failed, y_failed))
+
+def save_to_csv(servers):
+    with open('servers.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerows(["Server ID", "Sim Hours", "Total Repair Time (h)", "Failures"])
+        for i,s in enumerate(servers):
+            writer.writerow([i+1,round(s.working_time,2), round(s.total_repair_time/ 60,2), s.fail_count if hasattr(s,"fail_count") else 0])
+
+        print("zapisano dane")
+
 
 servers = []
 for i in range(10):
@@ -69,6 +96,7 @@ while  running:
 
     for event in pg.event.get():
         if event.type == pg.QUIT:
+            save_to_csv(servers)
             running = False
     dt = clock.tick(60) / 1000.0
     SIM_MINUTES = dt * (60/0.083333333)
@@ -96,6 +124,6 @@ while  running:
             s.update(SIM_MINUTES)
     screen.blit(image_path,(0, 0))
     for s in servers:
+       s.repair_draw(servers)
        s.draw()
     pg.display.flip()
-
