@@ -9,6 +9,9 @@ screen = pg.display.set_mode((800, 500))
 clock = pg.time.Clock()
 image_path= pygame.image.load("serwerownia.png")
 font = pg.font.SysFont(None, 24)
+tryb =input(str("Podaj tryb:"))
+print(tryb)
+
 class Server:
 
     def __init__(self, x, y):
@@ -41,11 +44,19 @@ class Server:
         if self.working:
             if self.freeze==False:
                self.working_time += sim_minutes / 60
-        if self.working:
-            if random.random() < 0.0001:
+        if self.working and tryb == "Tanszy":
+            if random.random() < 0.0005:
                 self.working = False
                 self.just_failed = True
                 self.fail_count += 1
+        elif self.working and tryb == "Drozszy":
+            if random.random() < 0.0001:
+                self.working = False
+                self.just_failed = True
+
+                self.fail_count += 1
+        elif self.working and tryb:
+            return
         else:
             self.repair_time -= sim_minutes
             self.total_repair_time += sim_minutes
@@ -98,6 +109,7 @@ while  running:
         if event.type == pg.QUIT:
             save_to_csv(servers)
             running = False
+
     dt = clock.tick(60) / 1000.0
     SIM_MINUTES = dt * (60/0.083333333)
     SIM_MIN_CRASH =dt*(60/5)
